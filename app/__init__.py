@@ -80,7 +80,7 @@ def setup_health_check(app: Flask) -> None:
         connection.disconnect()
         return True, "process mq connection ok"
     
-         # add a check for the process mq connection
+    # add a check for the transfer mq connection
     def checktransfermqconnection():
         tran = TransferNotifyQueueListener()
         connection = tran._create_mq_connection()
@@ -90,6 +90,7 @@ def setup_health_check(app: Flask) -> None:
         return True, "transfer mq connection ok"
     
     health_check.add_check(checkprocessmqconnection)
+    health_check.add_check(checktransfermqconnection)
     
     app.add_url_rule("/healthcheck", "healthcheck", view_func=lambda: health_check.run())
     if instance != "production":
