@@ -10,6 +10,7 @@ import stomp
 from mqresources.listener.stomp_interactor import StompInteractor
 from stomp.utils import Frame
 from tenacity import retry, before_log, wait_exponential, stop_after_attempt
+from notifier.dais_notifier import SmtpMailingService
 
 
 class StompListenerBase(stomp.ConnectionListener, StompInteractor, ABC):
@@ -23,6 +24,7 @@ class StompListenerBase(stomp.ConnectionListener, StompInteractor, ABC):
         super().__init__()
         self.__reconnect_on_disconnection = True
         self._connection = self.__create_subscribed_mq_connection()
+        self.mailing_service = SmtpMailingService()
 
     def on_message(self, frame: Frame) -> None:
         message_id = frame.headers['message-id']
@@ -62,9 +64,9 @@ class StompListenerBase(stomp.ConnectionListener, StompInteractor, ABC):
         self._acknowledge_message(message_id, message_subscription)
         try:
             subject = message_body["subject"]
-            body = message_body["message"]
-            recipients = message_body.get("receipients")
-            dais_notifier.send_email(subject,body, recepients)
+            body = message_body["body"]
+            recipients = message_body.get("recipients")
+            self.mailing_service.send_email(subject,body, recipients)
             
         except Exception:
             self._logger.exception(

@@ -18,5 +18,3 @@ batch_builder_client/*
 
 **/_aux/**/reports/*
 !**/.keep
-
-

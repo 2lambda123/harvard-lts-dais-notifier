@@ -2,7 +2,6 @@ import os, os.path, logging
 import smtplib
 from email.message import EmailMessage
 from tenacity import retry, stop_after_attempt
-import notifier.dais_notifier as dais_notifier
 
 logger = logging.getLogger('dais-notifier')
 class SmtpMailingService():
