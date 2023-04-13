@@ -13,7 +13,7 @@ A microservice that reads messages from a queue and sends out an email
 docker-compose -f docker-compose-local.yml up -d --build --force-recreate
 ```
 
-3. Local Healthcheck: https://localhost:10588/healthcheck
+3. Local Healthcheck: https://localhost:10587/healthcheck
 
 ## Testing
 Note, testing uses its own queues so they will not interfere with the queues used by the actual program.
