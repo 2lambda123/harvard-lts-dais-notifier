@@ -67,7 +67,6 @@ def setup_health_check(app: Flask) -> None:
         current_commit_hash = git_service.get_current_commit_hash()
     except GetCurrentCommitHashException as e:
         logger.error(str(e))
-        raise e
 
     add_application_section_to_health_check(current_commit_hash, health_check)
 
@@ -99,6 +98,8 @@ def setup_health_check(app: Flask) -> None:
 
 
 def add_application_section_to_health_check(current_commit_hash: str, health_check: HealthCheck) -> None:
+    if current_commit_hash is None:
+        current_commit_hash = "Could not determine"
     health_check.add_section(
         "application",
         {

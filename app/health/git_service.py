@@ -1,4 +1,4 @@
-import logging
+import logging, traceback
 
 from git import Repo, GitError
 
@@ -22,5 +22,5 @@ class GitService:
             logger.info("Current git commit hash: " + commit_hash)
             return commit_hash
         except GitError as ge:
-            logger.error(str(ge))
-            raise GetCurrentCommitHashException(str(ge))
+            logger.error(traceback.format_exc())
+            raise GetCurrentCommitHashException(traceback.format_exc())

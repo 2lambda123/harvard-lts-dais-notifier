@@ -27,6 +27,7 @@ RUN apt-get install -y git
 ADD supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Copy code into the image
+COPY --chown=appuser .git /home/appuser/.git
 COPY --chown=appuser ./app /home/appuser/app
 COPY --chown=appuser webapp.conf.example /home/appuser/webapp.conf.example
 COPY --chown=appuser gunicorn.conf.py /home/appuser/gunicorn.conf.py
