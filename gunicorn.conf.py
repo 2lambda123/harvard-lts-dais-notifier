@@ -52,7 +52,7 @@ logconfig_dict = {
     },
     "loggers": {
         'gunicorn.error': {
-            'handlers': ['console'],
+            'handlers': ['error_console'],
             'level': os.environ.get('APP_LOG_LEVEL', 'INFO'),
             'propagate': False,
         },
