@@ -40,7 +40,7 @@ class SmtpMailingService():
         message.set_content(email_body)
 
         instance = os.getenv("ENV", "instance unknown")
-        message['Subject'] = "(" + instance + ")" + email_subject
+        message['Subject'] = "(" + instance + ") " + email_subject
         message['From'] = email_sender
         message['To'] = email_destination
 
