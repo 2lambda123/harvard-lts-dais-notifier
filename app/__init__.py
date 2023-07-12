@@ -5,8 +5,6 @@ from logging.handlers import TimedRotatingFileHandler
 from flask import Flask, Response
 from healthcheck import HealthCheck, EnvironmentDump
 
-from app.mqresources.listener.process_notify_queue_listener import ProcessNotifyQueueListener
-from app.mqresources.listener.transfer_notify_queue_listener import TransferNotifyQueueListener
 from app.health.exceptions.get_current_commit_hash_exception import GetCurrentCommitHashException
 from app.health.git_service import GitService
 
@@ -29,8 +27,7 @@ logging.getLogger().setLevel(logging.WARNING)
 
 def create_app() -> Flask:
     configure_logger()
-    setup_queue_listeners()
-
+    
     app = Flask(__name__)
     setup_health_check(app)
     disable_cached_responses(app)
@@ -54,11 +51,6 @@ def configure_logger() -> None:
     logger.setLevel(log_level)
 
 
-def setup_queue_listeners() -> None:
-    ProcessNotifyQueueListener()
-    TransferNotifyQueueListener()
-
-
 def setup_health_check(app: Flask) -> None:
     health_check = HealthCheck(success_ttl=None, failed_ttl=None)
     
@@ -69,27 +61,6 @@ def setup_health_check(app: Flask) -> None:
         logger.error(str(e))
 
     add_application_section_to_health_check(current_commit_hash, health_check)
-
-     # add a check for the process mq connection
-    def checkprocessmqconnection():
-        proc = ProcessNotifyQueueListener()
-        connection = proc._create_mq_connection()
-        if connection is None:
-            return False, "process mq connection failed"
-        connection.disconnect()
-        return True, "process mq connection ok"
-    
-    # add a check for the transfer mq connection
-    def checktransfermqconnection():
-        tran = TransferNotifyQueueListener()
-        connection = tran._create_mq_connection()
-        if connection is None:
-            return False, "transfer mq connection failed"
-        connection.disconnect()
-        return True, "transfer mq connection ok"
-    
-    health_check.add_check(checkprocessmqconnection)
-    health_check.add_check(checktransfermqconnection)
     
     app.add_url_rule("/healthcheck", "healthcheck", view_func=lambda: health_check.run())
     if instance != "production":

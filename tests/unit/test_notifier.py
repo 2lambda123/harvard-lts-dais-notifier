@@ -1,7 +1,6 @@
 import pytest, sys
 sys.path.append('app')
 from notifier.dais_notifier import SmtpMailingService 
-
    
 def test_send_email_with_no_recipients():
     '''Sends an email which should receive the default recipients'''
