@@ -6,9 +6,10 @@ import logging
 app = Celery()
 app.config_from_object('celeryconfig')
 
-logger = logging.getLogger('transfer-service')
+logger = logging.getLogger('dais-notifier')
+retries = os.getenv('MESSAGE_MAX_RETRIES', 3)
 
-@app.task(serializer='json', name='notifier.tasks.send_email')
+@app.task(serializer='json', name='notifier.tasks.send_email', max_retries=retries)
 def send_email(message_body):
     try:
         subject = message_body["subject"]
