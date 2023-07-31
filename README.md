@@ -32,5 +32,22 @@ docker exec -it notifier bash
 pytest
 ```
 
+## Invoking the task manually
 
+- Clone this repo from github 
 
+- Create the .env from the env-template.txt and replace with proper values (use LPE Shared-DAIS for passwords)
+
+- Start up docker  
+
+`docker-compose -f docker-compose-local.yml up --build -d --force-recreate`
+
+- Exec into the docker container
+
+`docker exec -it notifier bash`
+
+- Run invoke task python script
+
+`python3 scripts/invoke-task.py`
+
+- An email should be sent to dts@hu.onmicrosoft.com
