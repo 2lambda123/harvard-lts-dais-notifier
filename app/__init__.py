@@ -70,17 +70,25 @@ def create_app() -> Flask:
 
 
 def configure_logger() -> None:
-    
-    log_file_path = os.getenv('LOGFILE_PATH', LOG_FILE_DEFAULT_PATH)
+    log_file_path = os.getenv("LOGFILE_PATH",
+                              LOG_FILE_DEFAULT_PATH)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+
+    logger = logging.getLogger('transfer-service')
+    logger.addHandler(console_handler)
     
-    file_handler = TimedRotatingFileHandler(
-        filename=log_file_path,
-        when=LOG_ROTATION,
-        backupCount=LOG_FILE_BACKUP_COUNT
-    )
-    logger.addHandler(file_handler)
-    file_handler.setFormatter(formatter)
+    if os.getenv("CONSOLE_LOGGING_ONLY", "true") == "false":
+        file_handler = TimedRotatingFileHandler(
+            filename=log_file_path,
+            when=LOG_ROTATION,
+            backupCount=LOG_FILE_BACKUP_COUNT
+        )
+        logger.addHandler(file_handler)
+        file_handler.setFormatter(formatter)
+
     log_level = os.getenv('LOG_LEVEL', LOG_FILE_DEFAULT_LEVEL)
     logger.setLevel(log_level)
 
