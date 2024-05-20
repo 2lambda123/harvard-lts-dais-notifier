@@ -3,9 +3,12 @@ ENV=development
 
 LOGFILE_PATH=/home/appuser/logs/dais_notifier.log
 #Choose from CRITICAL, ERROR, WARNING, INFO, DEBUG
-LOGLEVEL=DEBUG
 APP_LOG_LEVEL=DEBUG
 CELERY_LOG_LEVEL=DEBUG
+CONSOLE_LOGGING_ONLY=true
+HEARTBEAT_FILE=/tmp/worker_heartbeat
+READINESS_FILE=/tmp/worker_ready
+HEARTBEAT_WINDOW=60
 
 PYTHONPATH=/home/appuser/app
 
