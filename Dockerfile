@@ -18,6 +18,7 @@ COPY --chown=appuser ./scripts /home/appuser/scripts
 COPY --chown=appuser webapp.conf.example /home/appuser/webapp.conf.example
 COPY --chown=appuser gunicorn.conf.py /home/appuser/gunicorn.conf.py
 COPY --chown=appuser celeryconfig.py /home/appuser/celeryconfig.py
+COPY --chown=appuser conditional_start_script.sh /home/appuser/conditional_start_script.sh
 
 RUN rm -f /etc/nginx/sites-enabled/default && \
     rm -f /etc/service/nginx/down && \
