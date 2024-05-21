@@ -4,7 +4,7 @@ version: '3.8'
 
 services:
 
-  dts:
+  notifier:
     container_name: 'notifier'
     build:
       context: '.'
@@ -18,4 +18,4 @@ services:
     env_file:
       - '.env'
     ports:
-      - "10587:8443"
+      - "10587:8081"

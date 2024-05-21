@@ -3,10 +3,9 @@ import os, os.path
 from logging.handlers import TimedRotatingFileHandler
 
 from flask import Flask, Response
-from healthcheck import HealthCheck, EnvironmentDump
-
-from app.health.exceptions.get_current_commit_hash_exception import GetCurrentCommitHashException
-from app.health.git_service import GitService
+import werkzeug
+import time
+from pathlib import Path
 
 LOG_FILE_DEFAULT_PATH = "/home/appuser/logs/dais_notifier.log"
 LOG_FILE_DEFAULT_LEVEL = logging.DEBUG
@@ -29,59 +28,69 @@ def create_app() -> Flask:
     configure_logger()
     
     app = Flask(__name__)
-    setup_health_check(app)
+
+    @app.route('/readiness', endpoint="readiness")
+    @app.errorhandler(werkzeug.exceptions.BadRequest)
+    def readiness():
+        ready_path = os.getenv("READINESS_FILE", "/tmp/worker_ready")
+        readiness_file = Path(ready_path)
+
+        if not readiness_file.is_file():
+            return "DAIS Notifier worker NOT ready", 503
+        return "DAIS Notifier worker ready", 200
+    
+    @app.route('/liveness', endpoint="liveness")
+    @app.errorhandler(werkzeug.exceptions.BadRequest)
+    def liveness():
+        # check timestamp file
+        try:
+            current_ts = int(time.time())
+            hbeat_path = os.getenv("HEARTBEAT_FILE", "/tmp/worker_heartbeat")
+            heartbeat_file = Path(hbeat_path)
+            heartbeat_window = int(os.getenv("HEARTBEAT_WINDOW", 60))
+            fstats = os.stat(heartbeat_file)
+            mtime = int(fstats.st_mtime)
+            seconds_diff = int(current_ts - mtime)
+
+            if (seconds_diff < heartbeat_window):
+                print("healthy: last updated %d secs ago" % (seconds_diff))
+                return "DAIS Notifier healthy", 200
+            else:
+                print("UNHEALTHY: last updated %d secs ago" % (seconds_diff))
+                return "UNHEALTHY: DAIS Notifier liveness last updated \
+                 %d secs ago" % (seconds_diff), 500
+
+        except Exception:
+            print("Error: file not found")
+            return "Error: DAIS Notifier liveness file not found", 500
+
     disable_cached_responses(app)
 
     return app
 
 
 def configure_logger() -> None:
-    
-    log_file_path = os.getenv('LOGFILE_PATH', LOG_FILE_DEFAULT_PATH)
+    log_file_path = os.getenv("LOGFILE_PATH",
+                              LOG_FILE_DEFAULT_PATH)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+
+    logger = logging.getLogger('transfer-service')
+    logger.addHandler(console_handler)
     
-    file_handler = TimedRotatingFileHandler(
-        filename=log_file_path,
-        when=LOG_ROTATION,
-        backupCount=LOG_FILE_BACKUP_COUNT
-    )
-    logger.addHandler(file_handler)
-    file_handler.setFormatter(formatter)
+    if os.getenv("CONSOLE_LOGGING_ONLY", "true") == "false":
+        file_handler = TimedRotatingFileHandler(
+            filename=log_file_path,
+            when=LOG_ROTATION,
+            backupCount=LOG_FILE_BACKUP_COUNT
+        )
+        logger.addHandler(file_handler)
+        file_handler.setFormatter(formatter)
+
     log_level = os.getenv('LOG_LEVEL', LOG_FILE_DEFAULT_LEVEL)
     logger.setLevel(log_level)
-
-
-def setup_health_check(app: Flask) -> None:
-    health_check = HealthCheck(success_ttl=None, failed_ttl=None)
-    
-    git_service = GitService()
-    try:
-        current_commit_hash = git_service.get_current_commit_hash()
-    except GetCurrentCommitHashException as e:
-        logger.error(str(e))
-
-    add_application_section_to_health_check(current_commit_hash, health_check)
-    
-    app.add_url_rule("/healthcheck", "healthcheck", view_func=lambda: health_check.run())
-    if instance != "production":
-        envdump = EnvironmentDump()
-        app.add_url_rule("/environment", "environment", view_func=envdump.run)
-
-
-def add_application_section_to_health_check(current_commit_hash: str, health_check: HealthCheck) -> None:
-    if current_commit_hash is None:
-        current_commit_hash = "Could not determine"
-    health_check.add_section(
-        "application",
-        {
-            "maintainer": APPLICATION_MAINTAINER,
-            "git_repository": APPLICATION_GIT_REPOSITORY,
-            "code_version": {
-                "commit_hash": current_commit_hash,
-            }
-        }
-    )
-
 
 def disable_cached_responses(app: Flask) -> None:
     @app.after_request
